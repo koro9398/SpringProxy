@@ -8,16 +8,27 @@
    * общая идея в том, чтобы они были неотличимы от оригинала, так что можно выполнять все те же операции, что и над исходным объектом.
 
 
-* ### Простые сервисы и data-репозитории (`CatServiceTests`):
-1. Простой `@Service` просто так не проксируется;
-2. `@Service` + `@Transactional` = CGLIB proxy;
-3. Data-репозиторий реализуется с помощью Java Dynamic proxy.
+* ### Простые сервисы и data-репозитории:
+1. Для `CatServiceTests` активен стандартный параметр `spring.aop.proxy-target-class=true`;
+2. Для `CatServiceParamFalseTests` параметр переопределён: `spring.aop.proxy-target-class=false`.
 
-* ### Прокси, создаваемые с помощью аспектов (`SimpleServiceTests`):
-1. Бин, не реализующий интерфейсы, проксируется CGLIB;
-2. Бин, реализующий интерфейсы, тоже всё равно проксируется CGLIB;
-3. Бин, объявленный в виде лямбды и `@Bean` проксируется Dynamic Proxy.
-4. Дополнительная информация: `org.springframework.aop.framework.DefaultAopProxyFactory#createAopProxy`
+| `CatServiceTests`                                         | `CatServiceParamFalseTests`                               |
+|-----------------------------------------------------------|-----------------------------------------------------------|
+| Простой `@Service` просто так не проксируется             | Простой `@Service` просто так не проксируется             |
+| `@Service` + `@Transactional` = **CGLIB proxy**           | `@Service` + `@Transactional` = **Java Dynamic proxy**    |
+| Data-репозиторий реализуется с помощью Java Dynamic proxy | Data-репозиторий реализуется с помощью Java Dynamic proxy |
+
+* ### Прокси, создаваемые с помощью аспектов:
+1. Для `SimpleServiceTests` активен стандартный параметр `spring.aop.proxy-target-class=true`;
+2. Для `SimpleServiceParamFalseTests` параметр переопределён: `spring.aop.proxy-target-class=false`;
+3. Дополнительная информация: `org.springframework.aop.framework.DefaultAopProxyFactory#createAopProxy`.
+
+| `SimpleServiceTests`                                                | `SimpleServiceParamFalseTests`                                      |
+|---------------------------------------------------------------------|---------------------------------------------------------------------|
+| Бин, не реализующий интерфейсы, проксируется CGLIB                  | Бин, не реализующий интерфейсы, проксируется CGLIB                  |
+| Бин, реализующий интерфейсы, тоже всё равно проксируется **CGLIB**  | Бин, реализующий интерфейсы, проксируется **Dynamic Proxy**         |
+| Бин, объявленный в виде лямбды и `@Bean` проксируется Dynamic Proxy | Бин, объявленный в виде лямбды и `@Bean` проксируется Dynamic Proxy |
+
 
 * ### Singleton- и Prototype-scoped бины (`ScopeTests`):
 1. Сами по себе не проксируются;

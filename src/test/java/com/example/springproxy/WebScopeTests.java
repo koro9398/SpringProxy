@@ -35,7 +35,8 @@ public class WebScopeTests {
 
     /**
      * Request-scope бин: независимо от наличия сессии на каждый новый запрос один и тот же прокси,
-     * но новый конкретный объект, и, соответственно, разные значения
+     * но новый конкретный объект, и, соответственно, разные значения.
+     * Проксирование по умолчанию (@RequestScope) с помощью CGLIB.
      */
     @Test
     void testRequestScope() {
@@ -76,9 +77,10 @@ public class WebScopeTests {
      * Session-scope бин.
      * Вне сессии: один прокси, разные объекты, разные значения.
      * Внутри одной сессии: один прокси, один объект, одинаковые значения.
+     * Проксирование по умолчанию (@SessionScope) с помощью CGLIB.
      */
     @Test
-    void testSessionScopeWithinSession() {
+    void testSessionScope() {
         String beanName1;
         String beanName2;
 
@@ -111,6 +113,90 @@ public class WebScopeTests {
                 exchange("/scope/sessionScopeValue", Integer.class)
         );
     }
+
+
+    /**
+     * Request-scope бин, но с proxyMode = ScopedProxyMode.INTERFACES:
+     * независимо от наличия сессии на каждый новый запрос один и тот же прокси,
+     * но новый конкретный объект, и, соответственно, разные значения.
+     * Проксирование с помощью Java Dynamic Proxy.
+     */
+    @Test
+    void testRequestInterfacedScope() {
+        String beanName1;
+        String beanName2;
+
+        // Вне сессии
+        // Проверка прокси
+        beanName1 = getForObject("/scope/requestInterfacedScopeBeanName", String.class);
+        beanName2 = getForObject("/scope/requestInterfacedScopeBeanName", String.class);
+        assertEquals(beanName1, beanName2);
+        assertTrue(beanName1.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+        assertTrue(beanName2.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+
+        // Проверка конкретного объекта
+        assertNotEquals(
+                getForObject("/scope/requestInterfacedScopeValue", Integer.class),
+                getForObject("/scope/requestInterfacedScopeValue", Integer.class)
+        );
+
+
+        // Внутри одной сессии
+        // Проверка прокси
+        beanName1 = exchange("/scope/requestInterfacedScopeBeanName", String.class);
+        beanName2 = exchange("/scope/requestInterfacedScopeBeanName", String.class);
+        assertEquals(beanName1, beanName2);
+        assertTrue(beanName1.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+        assertTrue(beanName2.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+
+        // Проверка конкретного объекта
+        assertNotEquals(
+                exchange("/scope/requestInterfacedScopeValue", Integer.class),
+                exchange("/scope/requestInterfacedScopeValue", Integer.class)
+        );
+    }
+
+    /**
+     * Session-scope бин, но с proxyMode = ScopedProxyMode.INTERFACES.
+     * Вне сессии: один прокси, разные объекты, разные значения.
+     * Внутри одной сессии: один прокси, один объект, одинаковые значения.
+     * Проксирование с помощью Java Dynamic Proxy.
+     */
+    @Test
+    void testSessionInterfacedScope() {
+        String beanName1;
+        String beanName2;
+
+        // Вне сессии
+        // Проверка прокси
+        beanName1 = getForObject("/scope/sessionInterfacedScopeBeanName", String.class);
+        beanName2 = getForObject("/scope/sessionInterfacedScopeBeanName", String.class);
+        assertEquals(beanName1, beanName2);
+        assertTrue(beanName1.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+        assertTrue(beanName2.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+
+        // Проверка конкретного объекта
+        assertNotEquals(
+                getForObject("/scope/sessionInterfacedScopeValue", Integer.class),
+                getForObject("/scope/sessionInterfacedScopeValue", Integer.class)
+        );
+
+
+        // Внутри одной сессии
+        // Проверка прокси
+        beanName1 = exchange("/scope/sessionInterfacedScopeBeanName", String.class);
+        beanName2 = exchange("/scope/sessionInterfacedScopeBeanName", String.class);
+        assertEquals(beanName1, beanName2);
+        assertTrue(beanName1.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+        assertTrue(beanName2.contains(Constants.DYNAMIC_PROXY_ENHANCER_MARK));
+
+        // Проверка конкретного объекта
+        assertEquals(
+                exchange("/scope/sessionInterfacedScopeValue", Integer.class),
+                exchange("/scope/sessionInterfacedScopeValue", Integer.class)
+        );
+    }
+
 
     // Вызов exchange для передачи дополнительных заголовков.
     private <T> T exchange(String url, Class<T> clazz) {
